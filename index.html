@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Localizar Roteador</title>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+           
+        }
+
+        #map {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        #macAddress {
+            text-transform: uppercase;
+        }
+        
+    </style>
+</head>
+
+<body>
+    <div id="map"></div>
+
+    <main class="container">
+        <div class="row">
+            <div class="col">
+                <div class="card mb-4 rounded-3 shadow-sm mt-3">
+                    <div class="card-header py-3">
+                      <h4 class="my-0 fw-normal">Localizar Roteador</h4>
+                    </div>
+                    <div class="card-body">
+                        <label for="macAddress" class="form-label">Endereço MAC:</label>
+                        <input type="text" class="form-control" id="macAddress" placeholder="##:##:##:##:##:##" value="" required="">
+                        <button id="btnLocalizar" type="button" class="w-100 btn btn-lg btn-primary mt-3">Localizar</button>
+                    </div>
+                </div>
+            </div>
+        </div>        
+    </main>
+
+    
+    <script src="js/bootstrap.bundle.min.js"></script>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/jquery.mask.min.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAuBDuGZcrAfLdELAXGstyC7QYeacpGcAc&callback=initMap&v=weekly" async></script>   
+    
+    <script>
+        let map;
+        let marker;
+
+        $.jMaskGlobals = {
+            translation: {
+                '#': {pattern: /[a-fA-F0-9]/},
+            }
+        };
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: -15.797013861297424, lng: -47.89185472644187 },
+                zoom: 10,
+            });            
+        }
+
+        $(document).ready(function(){
+            $('#macAddress').mask('##:##:##:##:##:##');
+
+            $('#btnLocalizar').click(function() {
+                var postData = {
+                    "considerIp": "false",
+                    "wifiAccessPoints": [
+                        {
+                            "macAddress": "e4:26:8b:e0:fc:28"
+                        },
+                        {
+                            "macAddress": $("#macAddress").val()
+                        }
+                    ]
+                }
+
+                $.ajax({
+                    type: "POST",
+                    contentType: "application/json",
+                    url: "https://www.googleapis.com/geolocation/v1/geolocate?key=AIzaSyAuBDuGZcrAfLdELAXGstyC7QYeacpGcAc", 
+                    data: JSON.stringify(postData),
+                    success: function(result,status,xhr){
+                        var latitude = parseFloat(result.location.lat);
+                        var longtitude = parseFloat(result.location.lng);
+                        var myLatlng = new google.maps.LatLng(latitude, longtitude);                       
+                        map.setCenter(myLatlng);
+                        map.setZoom(18);
+
+                        if(marker == null) {
+                            marker = new google.maps.Marker({
+                                position: myLatlng,
+                                map,
+                            });
+                        } else {
+                            marker.setPosition(myLatlng);
+                        }
+                    },
+                    error: function(xhr,status,error) {
+                        alert("Não foi possível obter a localização do endereço MAC solicitado. Tente novamente informando outro endereço.");
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+
+</html>
